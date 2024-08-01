@@ -1,0 +1,71 @@
+[tool.poetry]
+name = "ticketswap-tap-apple-search-ads"
+version = "0.0.1"
+description = "Singer tap for AppleSearchAds, built with the Meltano Singer SDK."
+readme = "README.md"
+authors = ["Tobias Cadee <tobias.cadee@ticketswap.com>"]
+keywords = [
+    "ELT",
+    "AppleSearchAds",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+license = "Apache-2.0"
+packages = [
+    { include = "tap_apple_search_ads" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+importlib-resources = { version = "==6.4.*", python = "<3.9" }
+singer-sdk = { version="~=0.39.0", extras = [] }
+fs-s3fs = { version = "~=1.1.1", optional = true }
+requests = "~=2.32.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8"
+singer-sdk = { version="~=0.39.0", extras = ["testing"] }
+
+[tool.poetry.extras]
+s3 = ["fs-s3fs"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+
+[tool.ruff]
+src = ["tap_apple_search_ads"]
+target-version = "py38"
+
+[tool.ruff.lint]
+ignore = [
+    "ANN101",  # missing-type-self
+    "ANN102",  # missing-type-cls
+    "COM812",  # missing-trailing-comma
+    "ISC001",  # single-line-implicit-string-concatenation
+]
+select = ["ALL"]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["tap_apple_search_ads"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[build-system]
+requires = ["poetry-core==1.9.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+# CLI declaration
+tap-apple-search-ads = 'tap_apple_search_ads.tap:TapAppleSearchAds.cli'
