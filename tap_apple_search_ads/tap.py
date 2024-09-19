@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from singer_sdk import Tap
-from singer_sdk.typing import PropertiesList, Property, StringType, DateTimeType  # JSON schema typing helpers
+from singer_sdk.typing import (
+    DateType,
+    PropertiesList,
+    Property,
+    StringType,
+)  # JSON schema typing helpers
 
-# TODO: Import your custom stream types here:
 from tap_apple_search_ads import streams
 
 
@@ -35,6 +39,16 @@ class TapAppleSearchAds(Tap):
             required=True,
             description="The organisation id in your apple search ads.",
         ),
+        Property(
+            "start_date",
+            DateType,
+            description="Start date for reporting streams, format in YYYY-MM-DD.",
+        ),
+        Property(
+            "end_date",
+            DateType,
+            description="End date for reporting streams, format in YYYY-MM-DD.",
+        ),
     ).to_dict()
 
     def discover_streams(self) -> list[streams.AppleSearchAdsStream]:
@@ -45,6 +59,7 @@ class TapAppleSearchAds(Tap):
         """
         return [
             streams.CampaignsStream(self),
+            streams.CampaignReportsStream(self),
         ]
 
 

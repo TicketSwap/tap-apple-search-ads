@@ -8,7 +8,6 @@ from tap_apple_search_ads.tap import TapAppleSearchAds
 
 SAMPLE_CONFIG = {
     "start_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
-    # TODO: Initialize minimal tap config
 }
 
 

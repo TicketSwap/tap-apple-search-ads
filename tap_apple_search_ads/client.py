@@ -2,21 +2,14 @@
 
 from __future__ import annotations
 
-import sys
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING, Any, Callable
 
 import requests
-from singer_sdk.helpers.jsonpath import extract_jsonpath
-from singer_sdk.pagination import BaseOffsetPaginator  # noqa: TCH002
+from singer_sdk.pagination import BaseOffsetPaginator
 from singer_sdk.streams import RESTStream
 
 from tap_apple_search_ads.auth import AppleSearchAdsAuthenticator
-
-if sys.version_info >= (3, 9):
-    import importlib.resources as importlib_resources
-else:
-    import importlib_resources
 
 if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
@@ -24,16 +17,25 @@ if TYPE_CHECKING:
 
 _Auth = Callable[[requests.PreparedRequest], requests.PreparedRequest]
 
+
 class AppleSearchAdsPaginator(BaseOffsetPaginator):
-    def __init__(self, start_value: int, page_size: int, *args: Any, **kwargs: Any) -> None:
-        super().__init__(start_value, page_size, *args, **kwargs)
+    """Paginator for Apple Search Ads tap."""
 
     def has_more(self, response: requests.Response) -> bool:
+        """Override this method to check if the endpoint has any pages left.
+
+        Args:
+            response: API response object.
+
+        Returns:
+            Boolean flag used to indicate if the endpoint has more pages.
+        """
         pagination = response.json().get("pagination", {})
         total_results = pagination.get("totalResults", 0)
         start_index = pagination.get("startIndex", 0)
         items_per_page = pagination.get("itemsPerPage", 0)
         return start_index + items_per_page < total_results
+
 
 class AppleSearchAdsStream(RESTStream):
     """AppleSearchAds stream class."""
@@ -104,14 +106,3 @@ class AppleSearchAdsStream(RESTStream):
             params["field"] = "asc"
             params["order_by"] = self.replication_key
         return params
-
-    def parse_response(self, response: requests.Response) -> Iterable[dict]:
-        """Parse the response and return an iterator of result records.
-
-        Args:
-            response: The HTTP ``requests.Response`` object.
-
-        Yields:
-            Each record from the source.
-        """
-        yield from extract_jsonpath(self.records_jsonpath, input=response.json())

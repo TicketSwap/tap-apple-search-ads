@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-import sys
 import typing as t
-
-from singer_sdk.typing import PropertiesList, Property, DateTimeType, StringType, BooleanType, IntegerType, ObjectType, ArrayType  # JSON Schema typing helpers
+from datetime import datetime, timezone
 
 from tap_apple_search_ads.client import AppleSearchAdsStream
 
-if sys.version_info >= (3, 9):
-    import importlib.resources as importlib_resources
-else:
-    import importlib_resources
+from .schemas import campaigns_schema, reports_schema
+
+if t.TYPE_CHECKING:
+    from singer_sdk.helpers.types import Context, Record
+
+_TToken = t.TypeVar("_TToken")
+
 
 class CampaignsStream(AppleSearchAdsStream):
     """Define custom stream."""
@@ -20,47 +21,79 @@ class CampaignsStream(AppleSearchAdsStream):
     name = "campaigns"
     path = "/campaigns"
     primary_keys: t.ClassVar[list[str]] = ["id"]
-    replication_key = None
+    schema = campaigns_schema
 
-    schema = PropertiesList(
-        Property("id", IntegerType),
-        Property("orgId", IntegerType),
-        Property("name", StringType),
-        Property("name", StringType),
-        Property("budgetAmount", ObjectType(
-            Property("amount", StringType),
-            Property("currency", StringType),
+
+class ReportStream(AppleSearchAdsStream):
+    """Base class for report streams.
+
+    For now report streams only return totals and not grouped by.
+    """
+
+    rest_method = "POST"
+    records_jsonpath = "$.data.reportingDataResponse.row[*]"
+
+    @property
+    def schema(self) -> dict:
+        """Return schema with primary key added."""
+        schema = reports_schema
+        schema["properties"][self.primary_keys[0]] = {
+            "type": ["integer", "null"],
+        }
+        return schema
+
+    def prepare_request_payload(
+        self,
+        context: Context | None,  # noqa: ARG002
+        next_page_token: _TToken | None,  # noqa: ARG002
+    ) -> dict | None:
+        """Prepare the data payload for the REST API request.
+
+        Args:
+            context: Stream partition or context dictionary.
+            next_page_token: Token, page number or any request argument to request the
+                next page of data.
+        """
+        return {
+            "startTime": self.config.get("start_date", "2016-01-01"),
+            "endTime": self.config.get(
+                "start_date",
+                datetime.now(tz=timezone.utc).strftime("%Y-%m-%d"),
             ),
-        ),
-        Property("dailyBudgetAmount", ObjectType(
-            Property("amount", StringType),
-            Property("currency", StringType),
-            ),
-        ),
-        Property("adamId", IntegerType),
-        Property("paymentModel", StringType),
-        Property("locInvoiceDetails", ObjectType(
-            Property("clientName", StringType),
-            Property("orderNumber", StringType),
-            Property("buyerName", StringType),
-            Property("buyerEmail", StringType),
-            Property("billingContactEmail", StringType),
-            ),
-        ),
-        Property("budgetOrders", ArrayType(IntegerType)),
-        Property("startTime", DateTimeType),
-        Property("endTime", DateTimeType),
-        Property("status", StringType),
-        Property("servingStatus", StringType),
-        Property("creationTime", DateTimeType),
-        Property("servingStateReasons", ArrayType(StringType)),
-        Property("modificationTime", DateTimeType),
-        Property("deleted", BooleanType),
-        Property("sapinLawResponse", StringType),
-        Property("countriesOrRegions", ArrayType(StringType)),
-        Property("countryOrRegionServingStateReasons", ObjectType()),
-        Property("supplySources", ArrayType(StringType)),
-        Property("adChannelType", StringType),
-        Property("billingEvent", StringType),
-        Property("displayStatus", StringType),
-    ).to_dict()
+            "selector": {
+                "orderBy": [{"field": self.primary_keys[0], "sortOrder": "ASCENDING"}],
+                "pagination": {"offset": 0, "limit": 1000},
+            },
+            "timeZone": "UTC",
+            "returnRecordsWithNoMetrics": True,
+            "returnRowTotals": True,
+            "returnGrandTotals": True,
+        }
+
+    def post_process(
+        self,
+        row: Record,
+        context: Context | None = None,  # noqa: ARG002
+    ) -> dict | None:
+        """As needed, append or transform raw data to match expected structure.
+
+        Args:
+            row: Individual record in the stream.
+            context: Stream partition or context dictionary.
+
+        Returns:
+            The resulting record dict, or `None` if the record should be excluded.
+        """
+        new_row = dict(row["total"].items())
+        new_row[self.primary_keys[0]] = row["metadata"][self.primary_keys[0]]
+        return new_row
+
+
+class CampaignReportsStream(ReportStream):
+    """Campaign reports stream."""
+
+    path = "/reports/campaigns"
+    primary_keys: t.ClassVar[list[str]] = [
+        "campaignId",
+    ]  # make sure this is just one key for report streams.
+    name = "campaign_reports"
