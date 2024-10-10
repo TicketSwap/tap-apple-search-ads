@@ -211,5 +211,6 @@ class CampaignGranularReportsStream(GranularReportsStream):
     path = "/reports/campaigns"
     primary_keys: t.ClassVar[list[str]] = [
         "campaignId",
-    ]  # make sure this is just one key for report streams.
+        "date",
+    ]  # make sure the first key is the report type
     name = "campaign_granular_reports"
