@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from singer_sdk import Tap
 from singer_sdk.typing import (
     DateType,
@@ -48,6 +50,16 @@ class TapAppleSearchAds(Tap):
             "end_date",
             DateType,
             description="End date for reporting streams, format in YYYY-MM-DD.",
+            default=datetime.now(tz=timezone.utc).strftime("%Y-%m-%d"),
+        ),
+        Property(
+            "report_granularity",
+            StringType,
+            description=(
+                "The granularity of reporting streams. "
+                "One of HOURLY, DAILY, WEEKLY, MONTHLY."
+            ),
+            allowed_values=["HOURLY", "DAILY", "WEEKLY", "MONTHLY"],
         ),
     ).to_dict()
 
@@ -60,6 +72,7 @@ class TapAppleSearchAds(Tap):
         return [
             streams.CampaignsStream(self),
             streams.CampaignReportsStream(self),
+            streams.CampaignGranularReportsStream(self),
         ]
 
 

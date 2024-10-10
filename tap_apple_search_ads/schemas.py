@@ -4,6 +4,7 @@ from singer_sdk.typing import (  # JSON Schema typing helpers
     ArrayType,
     BooleanType,
     DateTimeType,
+    DateType,
     IntegerType,
     NumberType,
     ObjectType,
@@ -62,6 +63,7 @@ campaigns_schema = PropertiesList(
 ).to_dict()
 
 reports_schema = PropertiesList(
+    Property("date", DateType),
     Property("impressions", IntegerType),
     Property("taps", IntegerType),
     Property("ttr", NumberType),
