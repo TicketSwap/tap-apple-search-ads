@@ -14,6 +14,8 @@ from tap_apple_search_ads.auth import AppleSearchAdsAuthenticator
 if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
 
+from singer_sdk.helpers.jsonpath import extract_jsonpath
+
 
 _Auth = Callable[[requests.PreparedRequest], requests.PreparedRequest]
 
@@ -100,6 +102,7 @@ class AppleSearchAdsStream(RESTStream):
             A dictionary of URL query parameters.
         """
         params: dict = {}
+        params["limit"] = 1000
         if next_page_token:
             params["offset"] = next_page_token
         if self.replication_key:
