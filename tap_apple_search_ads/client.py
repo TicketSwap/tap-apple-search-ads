@@ -14,9 +14,6 @@ from tap_apple_search_ads.auth import AppleSearchAdsAuthenticator
 if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
 
-from singer_sdk.helpers.jsonpath import extract_jsonpath
-
-
 _Auth = Callable[[requests.PreparedRequest], requests.PreparedRequest]
 
 
