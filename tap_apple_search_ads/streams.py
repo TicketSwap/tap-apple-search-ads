@@ -47,7 +47,7 @@ class ReportStream(AppleSearchAdsStream):
 
     def prepare_request_payload(
         self,
-        context: Context | None,
+        context: Context | None,  # noqa: ARG002
         next_page_token: _TToken | None,  # noqa: ARG002
     ) -> dict | None:
         """Prepare the data payload for the REST API request.

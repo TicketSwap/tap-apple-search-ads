@@ -17,7 +17,6 @@ class AppleSearchAdsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
         Returns:
             A dict with the request body
         """
-        # TODO: Define the request body needed for the API.
         return {
             "scope": self.oauth_scopes,
             "client_id": self.config["client_id"],
