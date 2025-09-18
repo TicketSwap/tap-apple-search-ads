@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from functools import cached_property
-from typing import TYPE_CHECKING, Any, Callable
+import typing as t
+from typing import TYPE_CHECKING, Any
 
-import requests
 from singer_sdk.pagination import BaseOffsetPaginator
 from singer_sdk.streams import RESTStream
 
@@ -13,27 +12,6 @@ from tap_apple_search_ads.auth import AppleSearchAdsAuthenticator
 
 if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
-
-_Auth = Callable[[requests.PreparedRequest], requests.PreparedRequest]
-
-
-class AppleSearchAdsPaginator(BaseOffsetPaginator):
-    """Paginator for Apple Search Ads tap."""
-
-    def has_more(self, response: requests.Response) -> bool:
-        """Override this method to check if the endpoint has any pages left.
-
-        Args:
-            response: API response object.
-
-        Returns:
-            Boolean flag used to indicate if the endpoint has more pages.
-        """
-        pagination = response.json().get("pagination", {})
-        total_results = pagination.get("totalResults", 0)
-        start_index = pagination.get("startIndex", 0)
-        items_per_page = pagination.get("itemsPerPage", 0)
-        return start_index + items_per_page < total_results
 
 
 class AppleSearchAdsStream(RESTStream):
@@ -47,14 +25,54 @@ class AppleSearchAdsStream(RESTStream):
         """Return the API URL root, configurable via tap settings."""
         return "https://api.searchads.apple.com/api/v5"
 
-    @cached_property
-    def authenticator(self) -> _Auth:
-        """Return a new authenticator object.
+    @property
+    def authenticator(self) -> AppleSearchAdsAuthenticator:
+        """Get an authenticator object.
 
         Returns:
-            An authenticator instance.
+            The authenticator instance for this REST stream.
         """
-        return AppleSearchAdsAuthenticator.create_for_stream(self)
+        return AppleSearchAdsAuthenticator(
+            org_id=self.org_id,
+            is_partitioned=self.partitions is not None,
+            stream=self,
+            auth_endpoint="https://appleid.apple.com/auth/oauth2/token",
+            oauth_scopes="searchadsorg",
+            default_expiration=3600,
+            oauth_headers={
+                "Host": "appleid.apple.com",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+
+    @property
+    def partitions(self) -> list[dict] | None:
+        """Return a list of partitions, or None if the stream is not partitioned."""
+        if self.config.get("org_ids") is None:
+            return None
+        return [{"org_id": org_id} for org_id in self.config["org_ids"]]
+
+    def get_records(self, context: Context) -> t.Iterable[dict[str, t.Any]]:
+        """Return a generator of record-type dictionary objects.
+
+        Each record emitted should be a dictionary of property names to their values.
+
+        Args:
+            context: Stream partition or context dictionary.
+
+        Yields:
+            One item per (possibly processed) record in the API.
+        """
+        if self.partitions is None:
+            self.org_id = self.config["org_id"]
+        else:
+            self.org_id = context["org_id"]
+        for record in self.request_records(context):
+            transformed_record = self.post_process(record, context)
+            if transformed_record is None:
+                # Record filtered out during post_process()
+                continue
+            yield transformed_record
 
     @property
     def http_headers(self) -> dict:
@@ -64,7 +82,7 @@ class AppleSearchAdsStream(RESTStream):
             A dictionary of HTTP headers.
         """
         headers = {}
-        headers["X-AP-Context"] = f"orgId={self.config.get('org_id')}"
+        headers["X-AP-Context"] = f"orgId={self.org_id}"
         if "user_agent" in self.config:
             headers["User-Agent"] = self.config.get("user_agent")
         return headers
@@ -82,7 +100,7 @@ class AppleSearchAdsStream(RESTStream):
         Returns:
             A pagination helper instance.
         """
-        return AppleSearchAdsPaginator(0, 1000)
+        return BaseOffsetPaginator(0, 1000)
 
     def get_url_params(
         self,
