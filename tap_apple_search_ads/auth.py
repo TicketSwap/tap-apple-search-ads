@@ -2,13 +2,68 @@
 
 from __future__ import annotations
 
-from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
+import os
+from typing import TYPE_CHECKING
+
+from singer_sdk.authenticators import OAuthAuthenticator
+
+if TYPE_CHECKING:
+    from singer_sdk.streams import RESTStream
 
 
 # The SingletonMeta metaclass makes your streams reuse the same authenticator instance.
 # If this behaviour interferes with your use-case, you can remove the metaclass.
-class AppleSearchAdsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
+class AppleSearchAdsAuthenticator(OAuthAuthenticator):
     """Authenticator class for AppleSearchAds."""
+
+    def __init__(
+        self,
+        org_id: str,
+        is_partitioned: bool,  # noqa: FBT001
+        stream: RESTStream,
+        auth_endpoint: str,
+        oauth_scopes: str,
+        default_expiration: int,
+        oauth_headers: dict,
+    ) -> None:
+        """Create a new authenticator instance.
+
+        Args:
+            org_id: The organization ID.
+            is_partitioned: Whether to use partitioning for the requests.
+            kwargs: The keyword arguments to pass to the parent constructor.
+        """
+        self.org_id = org_id
+        self.is_partitioned = is_partitioned
+        super().__init__(
+            stream=stream,
+            auth_endpoint=auth_endpoint,
+            oauth_scopes=oauth_scopes,
+            default_expiration=default_expiration,
+            oauth_headers=oauth_headers,
+        )
+
+    @property
+    def client_id(self) -> str | None:
+        """Return the client ID.
+
+        Returns:
+            The client ID.
+        """
+        if self.is_partitioned:
+            return os.environ[f"TAP_APPLE_SEARCH_ADS_CLIENT_ID__{self.org_id}"]
+        return super().client_id
+
+    @property
+    def client_secret(self) -> str | None:
+        """Return the client secret.
+
+        Returns:
+            The client secret.
+        """
+        if self.is_partitioned:
+            return os.environ[f"TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__{self.org_id}"]
+        return super().client_secret
 
     @property
     def oauth_request_body(self) -> dict:
@@ -19,28 +74,7 @@ class AppleSearchAdsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
         """
         return {
             "scope": self.oauth_scopes,
-            "client_id": self.config["client_id"],
-            "client_secret": self.config["client_secret"],
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
             "grant_type": "client_credentials",
         }
-
-    @classmethod
-    def create_for_stream(cls, stream) -> AppleSearchAdsAuthenticator:  # noqa: ANN001
-        """Instantiate an authenticator for a specific Singer stream.
-
-        Args:
-            stream: The Singer stream instance.
-
-        Returns:
-            A new authenticator.
-        """
-        return cls(
-            stream=stream,
-            auth_endpoint="https://appleid.apple.com/auth/oauth2/token",
-            oauth_scopes="searchadsorg",
-            default_expiration=3600,
-            oauth_headers={
-                "Host": "appleid.apple.com",
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-        )
