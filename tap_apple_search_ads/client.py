@@ -13,6 +13,8 @@ from tap_apple_search_ads.auth import AppleSearchAdsAuthenticator
 if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
 
+PAGE_LIMIT = 1000
+
 
 class AppleSearchAdsStream(RESTStream):
     """AppleSearchAds stream class."""
@@ -100,7 +102,7 @@ class AppleSearchAdsStream(RESTStream):
         Returns:
             A pagination helper instance.
         """
-        return BaseOffsetPaginator(0, 1000)
+        return BaseOffsetPaginator(0, PAGE_LIMIT)
 
     def get_url_params(
         self,
@@ -117,7 +119,7 @@ class AppleSearchAdsStream(RESTStream):
             A dictionary of URL query parameters.
         """
         params: dict = {}
-        params["limit"] = 1000
+        params["limit"] = PAGE_LIMIT
         if next_page_token:
             params["offset"] = next_page_token
         if self.replication_key:
