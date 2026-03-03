@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     steps:
     - uses: actions/checkout@v5
       with:
@@ -18,7 +18,7 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     needs: [build]
     ## TODO: optionally provide the name of the environment for the trusted
     ## publisher on PyPI
