@@ -25,6 +25,7 @@ class GranularityConfig(NamedTuple):
     days: int
     min_interval: int
     max_interval: int
+    lookback: timedelta
 
 
 class CampaignsStream(AppleSearchAdsStream):
@@ -120,10 +121,21 @@ class GranularReportsStream(ReportStream):
 
     # Granularity configuration mapping
     GRANULARITY_CONFIGS: t.ClassVar[dict[str, GranularityConfig]] = {
-        "HOURLY": GranularityConfig(days=30, min_interval=0, max_interval=7),
-        "DAILY": GranularityConfig(days=90, min_interval=0, max_interval=90),
-        "WEEKLY": GranularityConfig(days=365 * 2, min_interval=14, max_interval=365),
-        "MONTHLY": GranularityConfig(days=365 * 2, min_interval=31 * 3, max_interval=365 * 2),
+        "HOURLY": GranularityConfig(
+            days=30, min_interval=0, max_interval=7, lookback=timedelta(hours=8)
+        ),
+        "DAILY": GranularityConfig(
+            days=90, min_interval=0, max_interval=90, lookback=timedelta(days=8)
+        ),
+        "WEEKLY": GranularityConfig(
+            days=365 * 2, min_interval=14, max_interval=365, lookback=timedelta(weeks=8)
+        ),
+        "MONTHLY": GranularityConfig(
+            days=365 * 2,
+            min_interval=31 * 3,
+            max_interval=365 * 2,
+            lookback=timedelta(days=8 * 30),
+        ),
     }
 
     def _get_initial_start_date(self, context: Context | None) -> datetime:
@@ -185,7 +197,7 @@ class GranularReportsStream(ReportStream):
         payload["granularity"] = granularity
 
         now = datetime.now(tz=timezone.utc)
-        start_date = self._get_initial_start_date(context)
+        start_date = self._get_initial_start_date(context) - config.lookback
         start_date = self._adjust_start_date(start_date, config, now)
         end_date = self._adjust_end_date(now, start_date, config)
 
