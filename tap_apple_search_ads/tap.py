@@ -83,6 +83,7 @@ class TapAppleSearchAds(Tap):
             A list of discovered streams.
         """
         return [
+            streams.AclsStream(self),
             streams.CampaignsStream(self),
             streams.CampaignReportsStream(self),
             streams.CampaignGranularReportsStream(self),

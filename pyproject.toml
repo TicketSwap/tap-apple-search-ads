@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ticketswap-tap-apple-search-ads"
-version = "0.0.1"
+version = "1.4.0"
 description = "Singer tap for AppleSearchAds, built with the Meltano Singer SDK."
 readme = "README.md"
 authors = ["Tobias Cadee <tobias.cadee@ticketswap.com>"]

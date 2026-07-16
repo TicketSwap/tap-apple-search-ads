@@ -47,22 +47,38 @@ class AppleSearchAdsAuthenticator(OAuthAuthenticator):
     def client_id(self) -> str | None:
         """Return the client ID.
 
+        In partitioned mode, prefer the org-specific env variable. If it is not
+        set, fall back to the shared `client_id` (config value /
+        `TAP_APPLE_SEARCH_ADS_CLIENT_ID`), so a single set of credentials with
+        access to multiple orgs does not need to be duplicated per org.
+
         Returns:
             The client ID.
         """
         if self.is_partitioned:
-            return os.environ[f"TAP_APPLE_SEARCH_ADS_CLIENT_ID__{self.org_id}"]
+            key = f"TAP_APPLE_SEARCH_ADS_CLIENT_ID__{self.org_id}"
+            org_specific = os.environ.get(key)
+            if org_specific is not None:
+                return org_specific
         return super().client_id
 
     @property
     def client_secret(self) -> str | None:
         """Return the client secret.
 
+        In partitioned mode, prefer the org-specific env variable. If it is not
+        set, fall back to the shared `client_secret` (config value /
+        `TAP_APPLE_SEARCH_ADS_CLIENT_SECRET`), so a single set of credentials
+        with access to multiple orgs does not need to be duplicated per org.
+
         Returns:
             The client secret.
         """
         if self.is_partitioned:
-            return os.environ[f"TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__{self.org_id}"]
+            key = f"TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__{self.org_id}"
+            org_specific = os.environ.get(key)
+            if org_specific is not None:
+                return org_specific
         return super().client_secret
 
     @property

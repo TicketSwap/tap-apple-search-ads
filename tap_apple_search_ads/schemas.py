@@ -13,6 +13,17 @@ from singer_sdk.typing import (  # JSON Schema typing helpers
     StringType,
 )
 
+acls_schema = PropertiesList(
+    Property("orgId", IntegerType),
+    Property("orgName", StringType),
+    Property("displayName", StringType),
+    Property("currency", StringType),
+    Property("timeZone", StringType),
+    Property("paymentModel", StringType),
+    Property("parentOrgId", IntegerType),
+    Property("roleNames", ArrayType(StringType)),
+).to_dict()
+
 campaigns_schema = PropertiesList(
     Property("id", IntegerType),
     Property("orgId", IntegerType),
