@@ -7,10 +7,11 @@ from datetime import datetime, timedelta, timezone
 from typing import NamedTuple
 
 from singer_sdk.helpers.jsonpath import extract_jsonpath
+from singer_sdk.pagination import SinglePagePaginator
 
 from tap_apple_search_ads.client import PAGE_LIMIT, AppleSearchAdsStream
 
-from .schemas import campaigns_schema, reports_schema
+from .schemas import acls_schema, campaigns_schema, reports_schema
 
 if t.TYPE_CHECKING:
     import requests
@@ -26,6 +27,41 @@ class GranularityConfig(NamedTuple):
     min_interval: int
     max_interval: int
     lookback: timedelta
+
+
+class AclsStream(AppleSearchAdsStream):
+    """User ACL stream.
+
+    Lists every org the credentials can access. In the Apple Ads UI/reporting
+    these orgs are surfaced as "Campaign Groups" (e.g. "TicketSwap - NL"), so
+    this stream provides the orgId -> displayName mapping that reports and
+    campaigns can be attributed to.
+
+    `/acls` is an account-level endpoint that returns the same list regardless
+    of org context, so it is synced once rather than once per org partition.
+    """
+
+    name = "acls"
+    path = "/acls"
+    primary_keys: t.ClassVar[list[str]] = ["orgId"]
+    schema = acls_schema
+
+    @property
+    def partitions(self) -> list[dict] | None:
+        """Sync once, using a single org only for auth/context resolution."""
+        org_ids = self.config.get("org_ids")
+        if org_ids:
+            return [{"org_id": org_ids[0]}]
+        return [{"org_id": self.config["org_id"]}]
+
+    def get_new_paginator(self) -> SinglePagePaginator:
+        """Return a single-page paginator.
+
+        `/acls` is not paginated: it ignores the `offset`/`limit` params and
+        returns the full list on every request, so the inherited offset
+        paginator would loop forever.
+        """
+        return SinglePagePaginator()
 
 
 class CampaignsStream(AppleSearchAdsStream):
