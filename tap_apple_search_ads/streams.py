@@ -79,7 +79,7 @@ class ReportStream(AppleSearchAdsStream):
     For now report streams only return totals and not grouped by.
     """
 
-    rest_method = "POST"
+    http_method = "POST"
     records_jsonpath = "$.data.reportingDataResponse.row[*]"
 
     @property

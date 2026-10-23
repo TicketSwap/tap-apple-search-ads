@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import functools
 import typing as t
 from typing import TYPE_CHECKING, Any
 
-from singer_sdk.pagination import BaseOffsetPaginator
+from singer_sdk.pagination import OffsetPaginator
 from singer_sdk.streams import RESTStream
 
 from tap_apple_search_ads.auth import AppleSearchAdsAuthenticator
@@ -14,6 +15,28 @@ if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
 
 PAGE_LIMIT = 1000
+
+
+@functools.cache
+def _get_authenticator(
+    org_id: str,
+    is_partitioned: bool,  # noqa: FBT001
+    client_id: str | None,
+    client_secret: str | None,
+) -> AppleSearchAdsAuthenticator:
+    return AppleSearchAdsAuthenticator(
+        org_id=org_id,
+        is_partitioned=is_partitioned,
+        client_id=client_id,
+        client_secret=client_secret,
+        auth_endpoint="https://appleid.apple.com/auth/oauth2/token",
+        oauth_scopes="searchadsorg",
+        default_expiration=3600,
+        oauth_headers={
+            "Host": "appleid.apple.com",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+    )
 
 
 class AppleSearchAdsStream(RESTStream):
@@ -34,17 +57,11 @@ class AppleSearchAdsStream(RESTStream):
         Returns:
             The authenticator instance for this REST stream.
         """
-        return AppleSearchAdsAuthenticator(
-            org_id=self.org_id,
-            is_partitioned=self.partitions is not None,
-            stream=self,
-            auth_endpoint="https://appleid.apple.com/auth/oauth2/token",
-            oauth_scopes="searchadsorg",
-            default_expiration=3600,
-            oauth_headers={
-                "Host": "appleid.apple.com",
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
+        return _get_authenticator(
+            self.org_id,
+            self.partitions is not None,
+            self.config.get("client_id"),
+            self.config.get("client_secret"),
         )
 
     @property
@@ -69,12 +86,7 @@ class AppleSearchAdsStream(RESTStream):
             self.org_id = self.config["org_id"]
         else:
             self.org_id = context["org_id"]
-        for record in self.request_records(context):
-            transformed_record = self.post_process(record, context)
-            if transformed_record is None:
-                # Record filtered out during post_process()
-                continue
-            yield transformed_record
+        yield from self.request_records(context)
 
     @property
     def http_headers(self) -> dict:
@@ -89,7 +101,7 @@ class AppleSearchAdsStream(RESTStream):
             headers["User-Agent"] = self.config.get("user_agent")
         return headers
 
-    def get_new_paginator(self) -> BaseOffsetPaginator:
+    def get_new_paginator(self) -> OffsetPaginator:
         """Create a new pagination helper instance.
 
         If the source API can make use of the `next_page_token_jsonpath`
@@ -102,7 +114,7 @@ class AppleSearchAdsStream(RESTStream):
         Returns:
             A pagination helper instance.
         """
-        return BaseOffsetPaginator(0, PAGE_LIMIT)
+        return OffsetPaginator(0, PAGE_LIMIT)
 
     def get_url_params(
         self,

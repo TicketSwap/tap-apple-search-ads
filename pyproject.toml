@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ticketswap-tap-apple-search-ads"
-version = "1.4.0"
+version = "1.5.0"
 description = "Singer tap for AppleSearchAds, built with the Meltano Singer SDK."
 readme = "README.md"
 authors = ["Tobias Cadee <tobias.cadee@ticketswap.com>"]
@@ -11,8 +11,6 @@ keywords = [
 classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -23,15 +21,14 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
-importlib-resources = { version = "==6.4.*", python = "<3.9" }
-singer-sdk = { version="~=0.42.1", extras = [] }
+python = ">=3.10"
+singer-sdk = { version="~=0.54.9", extras = [] }
 fs-s3fs = { version = "~=1.1.1", optional = true }
-requests = "~=2.32.4"
+requests = "~=2.34.2"
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=8"
-singer-sdk = { version="~=0.42.1", extras = ["testing"] }
+pytest = ">=9.1.1"
+singer-sdk = { version="~=0.54.9", extras = ["testing"] }
 
 [tool.poetry.extras]
 s3 = ["fs-s3fs"]
@@ -42,7 +39,7 @@ warn_unused_configs = true
 
 [tool.ruff]
 src = ["tap_apple_search_ads"]
-target-version = "py38"
+target-version = "py310"
 
 [tool.ruff.lint]
 ignore = [
@@ -63,7 +60,7 @@ known-first-party = ["tap_apple_search_ads"]
 convention = "google"
 
 [build-system]
-requires = ["poetry-core==1.9.0"]
+requires = ["poetry-core==2.5.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]

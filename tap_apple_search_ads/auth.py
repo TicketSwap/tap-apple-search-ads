@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
 
 from singer_sdk.authenticators import OAuthAuthenticator
-
-if TYPE_CHECKING:
-    from singer_sdk.streams import RESTStream
 
 
 # The SingletonMeta metaclass makes your streams reuse the same authenticator instance.
@@ -20,7 +16,8 @@ class AppleSearchAdsAuthenticator(OAuthAuthenticator):
         self,
         org_id: str,
         is_partitioned: bool,  # noqa: FBT001
-        stream: RESTStream,
+        client_id: str | None,
+        client_secret: str | None,
         auth_endpoint: str,
         oauth_scopes: str,
         default_expiration: int,
@@ -36,7 +33,8 @@ class AppleSearchAdsAuthenticator(OAuthAuthenticator):
         self.org_id = org_id
         self.is_partitioned = is_partitioned
         super().__init__(
-            stream=stream,
+            client_id=client_id,
+            client_secret=client_secret,
             auth_endpoint=auth_endpoint,
             oauth_scopes=oauth_scopes,
             default_expiration=default_expiration,
