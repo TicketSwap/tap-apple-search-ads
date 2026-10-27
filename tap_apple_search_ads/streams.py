@@ -94,7 +94,7 @@ class ReportStream(AppleSearchAdsStream):
     def prepare_request_payload(
         self,
         context: Context | None,  # noqa: ARG002
-        next_page_token: _TToken | None,  # noqa: ARG002
+        next_page_token: _TToken | None,
     ) -> dict:
         """Prepare the data payload for the REST API request.
 
@@ -177,17 +177,22 @@ class GranularReportsStream(ReportStream):
     def _get_initial_start_date(self, context: Context | None) -> datetime:
         """Get the initial start date from various sources."""
         start_date_str = (
-            self.get_starting_replication_key_value(context) or self.config.get("start_date") or "1900-01-01"
+            self.get_starting_replication_key_value(context)
+            or self.config.get("start_date")
+            or "1900-01-01"
         )
         return datetime.fromisoformat(start_date_str).replace(tzinfo=timezone.utc)
 
-    def _adjust_start_date(self, start_date: datetime, config: GranularityConfig, now: datetime) -> datetime:
+    def _adjust_start_date(
+        self, start_date: datetime, config: GranularityConfig, now: datetime
+    ) -> datetime:
         """Adjust start date based on granularity constraints."""
         # Check minimum start date constraint
         min_start_date = now - timedelta(days=config.days)
         if start_date < min_start_date:
             self.logger.info(
-                "Start date is before minimum start date for this granularity, " "setting start date to %s",
+                "Start date is before minimum start date for this granularity, "
+                "setting start date to %s",
                 min_start_date.strftime("%Y-%m-%d"),
             )
             start_date = min_start_date
@@ -196,19 +201,23 @@ class GranularReportsStream(ReportStream):
         min_interval_start_date = now - timedelta(days=config.min_interval)
         if start_date > min_interval_start_date:
             self.logger.info(
-                "Start date is after minimum interval date for this granularity, " "setting start date to %s",
+                "Start date is after minimum interval date for this granularity, "
+                "setting start date to %s",
                 min_interval_start_date.strftime("%Y-%m-%d"),
             )
             start_date = min_interval_start_date
 
         return start_date
 
-    def _adjust_end_date(self, end_date: datetime, start_date: datetime, config: GranularityConfig) -> datetime:
+    def _adjust_end_date(
+        self, end_date: datetime, start_date: datetime, config: GranularityConfig
+    ) -> datetime:
         """Adjust end date based on maximum interval constraint."""
         max_end_date = start_date + timedelta(days=config.max_interval)
         if max_end_date < end_date:
             self.logger.info(
-                "End date is after maximum end date for this granularity, " "setting end date to %s",
+                "End date is after maximum end date for this granularity, "
+                "setting end date to %s",
                 max_end_date.strftime("%Y-%m-%d"),
             )
             return max_end_date
