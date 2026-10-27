@@ -7,6 +7,8 @@ from singer_sdk.testing import get_tap_test_class
 from tap_apple_search_ads.tap import TapAppleSearchAds
 
 SAMPLE_CONFIG = {
+    "org_ids": ["1227480"],
+    "report_granularity": "DAILY",
     "start_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
 }
 
