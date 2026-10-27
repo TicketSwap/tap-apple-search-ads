@@ -10,12 +10,6 @@ on:
     - pyproject.toml
     - poetry.lock
   pull_request:
-    paths:
-    - .github/workflows/test.yml
-    - tap_apple_search_ads/**
-    - tests/**
-    - pyproject.toml
-    - poetry.lock
   workflow_dispatch:
 
 concurrency:
@@ -29,8 +23,20 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Setup uv
+      uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+    - name: Run ruff
+      run: |
+        uvx ruff@0.17.3 check
+        uvx ruff@0.17.3 format --check
+
   pytest:
-    name: Test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,3 +60,12 @@ jobs:
         TAP_APPLE_SEARCH_ADS_CLIENT_ID__1227480: ${{ secrets.TAP_APPLE_SEARCH_ADS_CLIENT_ID }}
         TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__1227480: ${{ secrets.TAP_APPLE_SEARCH_ADS_CLIENT_SECRET }}
       run: poetry run pytest
+
+  test:
+    if: always()
+    needs: [pytest]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fail if any pytest leg failed
+      if: needs.pytest.result != 'success'
+      run: exit 1
