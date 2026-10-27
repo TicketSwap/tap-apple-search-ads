@@ -12,7 +12,7 @@ from singer_sdk.authenticators import OAuthAuthenticator
 class AppleSearchAdsAuthenticator(OAuthAuthenticator):
     """Authenticator class for AppleSearchAds."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         org_id: str,
         is_partitioned: bool,  # noqa: FBT001
@@ -28,7 +28,12 @@ class AppleSearchAdsAuthenticator(OAuthAuthenticator):
         Args:
             org_id: The organization ID.
             is_partitioned: Whether to use partitioning for the requests.
-            kwargs: The keyword arguments to pass to the parent constructor.
+            client_id: The shared client ID, used without an org-specific one.
+            client_secret: The shared client secret, used without an org-specific one.
+            auth_endpoint: The OAuth token endpoint.
+            oauth_scopes: The OAuth scopes to request.
+            default_expiration: The token lifetime in seconds.
+            oauth_headers: Extra headers for the token request.
         """
         self.org_id = org_id
         self.is_partitioned = is_partitioned

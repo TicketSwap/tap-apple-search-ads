@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from singer_sdk import Tap
 from singer_sdk.typing import (
+    ArrayType,
     DateType,
     PropertiesList,
     Property,
     StringType,
-    ArrayType,
 )  # JSON schema typing helpers
 
 from tap_apple_search_ads import streams
@@ -37,15 +38,23 @@ class TapAppleSearchAds(Tap):
         Property(
             "org_id",
             StringType,
-            description="The organisation that you want to sync. Superseded by `org_ids` if that is set.",
+            description=(
+                "The organisation that you want to sync. "
+                "Superseded by `org_ids` if that is set."
+            ),
         ),
         Property(
             "org_ids",
             ArrayType(StringType),
-            description="The organisations that you want to sync. The client_ids and client_secrets must be mapped to "
-            "`TAP_APPLE_SEARCH_ADS_CLIENT_ID__<org_id>` and `TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__<org_id>` "
-            "environment variables respectively. If you are just syncing one organisation, you can use the standard "
-            "env variables or the config values.",
+            description=(
+                "The organisations that you want to sync. "
+                "The client_ids and client_secrets must be mapped to "
+                "`TAP_APPLE_SEARCH_ADS_CLIENT_ID__<org_id>` and "
+                "`TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__<org_id>` "
+                "environment variables respectively. "
+                "If you are just syncing one organisation, "
+                "you can use the standard env variables or the config values."
+            ),
         ),
         Property(
             "start_date",
@@ -61,16 +70,23 @@ class TapAppleSearchAds(Tap):
         Property(
             "report_granularity",
             StringType,
-            description=("The granularity of reporting streams. " "One of HOURLY, DAILY, WEEKLY, MONTHLY."),
+            description=(
+                "The granularity of reporting streams. "
+                "One of HOURLY, DAILY, WEEKLY, MONTHLY."
+            ),
             allowed_values=["HOURLY", "DAILY", "WEEKLY", "MONTHLY"],
         ),
     ).to_dict()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the tap."""
         super().__init__(*args, **kwargs)
         if not (
-            (self.config.get("org_id") and self.config.get("client_id") and self.config.get("client_secret"))
+            (
+                self.config.get("org_id")
+                and self.config.get("client_id")
+                and self.config.get("client_secret")
+            )
             or self.config.get("org_ids")
         ):
             msg = "You must provide either `org_id` or `org_ids` in the config."
