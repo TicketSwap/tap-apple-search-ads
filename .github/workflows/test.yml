@@ -8,7 +8,7 @@ on:
     - tap_apple_search_ads/**
     - tests/**
     - pyproject.toml
-    - poetry.lock
+    - uv.lock
   pull_request:
   workflow_dispatch:
 
@@ -46,20 +46,13 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-      with:
-        python-version: ${{ matrix.python-version }}
-        check-latest: true
-    - name: Install Poetry
-      run: pip install poetry
-    - name: Install dependencies
-      run: poetry install
+    - name: Setup uv
+      uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
     - name: Test with pytest
       env:
         TAP_APPLE_SEARCH_ADS_CLIENT_ID__1227480: ${{ secrets.TAP_APPLE_SEARCH_ADS_CLIENT_ID }}
         TAP_APPLE_SEARCH_ADS_CLIENT_SECRET__1227480: ${{ secrets.TAP_APPLE_SEARCH_ADS_CLIENT_SECRET }}
-      run: poetry run pytest
+      run: uv run --locked --managed-python --python ${{ matrix.python-version }} pytest
 
   test:
     if: always()
