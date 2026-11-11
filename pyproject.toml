@@ -1,9 +1,9 @@
-[tool.poetry]
+[project]
 name = "ticketswap-tap-apple-search-ads"
 version = "1.5.0"
 description = "Singer tap for AppleSearchAds, built with the Meltano Singer SDK."
 readme = "README.md"
-authors = ["Tobias Cadee <tobias.cadee@ticketswap.com>"]
+authors = [{ name = "Tobias Cadee", email = "tobias.cadee@ticketswap.com" }]
 keywords = [
     "ELT",
     "AppleSearchAds",
@@ -15,22 +15,29 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 license = "Apache-2.0"
-packages = [
-    { include = "tap_apple_search_ads" },
+requires-python = ">=3.11"
+dependencies = [
+    "singer-sdk~=0.54.9",
+    "requests~=2.34.2",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.11"
-singer-sdk = { version="~=0.54.9", extras = [] }
-fs-s3fs = { version = "~=1.1.1", optional = true }
-requests = "~=2.34.2"
+[project.optional-dependencies]
+s3 = [
+    "fs-s3fs~=1.1.1",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = ">=9.1.1"
-singer-sdk = { version="~=0.54.9", extras = ["testing"] }
+[project.scripts]
+tap-apple-search-ads = "tap_apple_search_ads.tap:TapAppleSearchAds.cli"
 
-[tool.poetry.extras]
-s3 = ["fs-s3fs"]
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+    "pytest>=9.1.1",
+    "singer-sdk[testing]~=0.54.9",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["tap_apple_search_ads"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -63,9 +70,5 @@ known-first-party = ["tap_apple_search_ads"]
 convention = "google"
 
 [build-system]
-requires = ["poetry-core==2.5.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-# CLI declaration
-tap-apple-search-ads = 'tap_apple_search_ads.tap:TapAppleSearchAds.cli'
+requires = ["hatchling"]
+build-backend = "hatchling.build"
