@@ -31,7 +31,9 @@ tap-apple-search-ads = "tap_apple_search_ads.tap:TapAppleSearchAds.cli"
 
 [dependency-groups]
 dev = [
+    "authlib>=1.9.5",
     "ipykernel>=7.4.0",
+    "pycryptodome>=4.4.0",
     "pytest>=9.1.1",
     "singer-sdk[testing]~=0.54.9",
 ]
